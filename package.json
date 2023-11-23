@@ -1,0 +1,13 @@
+{
+  "name": "tst-group-tabs-by-domain",
+  "author": "stanah",
+  "repository": "github:stanah/tst-random-tab",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "web-ext": "^7.8.0"
+  },
+  "scripts": {
+    "build": "web-ext build --no-config-discovery --overwrite-dest --source-dir ./src"
+  }
+}

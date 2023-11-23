@@ -1,21 +1,17 @@
 {
-
   "manifest_version": 2,
   "name": "Group Tabs by Domain",
-  "version": "1.0",
-
+  "version": "0.0.1",
   "description": "Groups Tree Style Tabs by Domain",
-
-  "browser_action": {
-    "default_icon": "icons/sort.svg",
-    "default_title": "Group Tabs by Domain"
+  "applications": {
+    "gecko": {
+      "id": "group-tabs-by-domain@stanah"
+    }
   },
-
+  "browser_action": {},
+  "icons": {},
   "background": {
     "scripts": ["background.js"]
   },
-
-  "permissions": [
-    "tabs"
-  ]
+  "permissions": ["tabs"]
 }
