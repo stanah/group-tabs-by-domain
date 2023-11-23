@@ -8,6 +8,7 @@
     "web-ext": "^7.8.0"
   },
   "scripts": {
-    "build": "web-ext build --no-config-discovery --overwrite-dest --source-dir ./src"
+    "build": "web-ext build --no-config-discovery --overwrite-dest --source-dir ./src",
+    "dev": "web-ext run --no-config-discovery --source-dir ./src"
   }
 }
