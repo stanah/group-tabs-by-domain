@@ -1,11 +1,11 @@
 {
   "manifest_version": 2,
-  "name": "Group Tabs by Domain",
+  "name": "TST Group Tabs by Domain",
   "version": "0.0.1",
   "description": "Groups Tree Style Tabs by Domain",
   "applications": {
     "gecko": {
-      "id": "group-tabs-by-domain@stanah"
+      "id": "tst-group-tabs-by-domain@stanah"
     }
   },
   "browser_action": {},
