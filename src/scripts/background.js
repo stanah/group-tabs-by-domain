@@ -32,9 +32,7 @@ async function groupTabs() {
 
   const groups = groupBy(tabs, "domain");
 
-  const groupsWithMultiple = Object.entries(groups).filter(
-    (g) => g[1].length > 1
-  );
+  const groupsWithMultiple = Object.entries(groups).filter((g) => g[1].length > 1);
 
   // Sort smallest-to-largest, because we are inserting at top and want to eventually
   // have the largest groups at the top
@@ -45,15 +43,15 @@ async function groupTabs() {
     .filter((g) => g.length === 1)
     .map((tabs) => tabs[0]);
 
-  for (let [domain, group] of groupsWithMultiple) {
+  for (const [domain, group] of groupsWithMultiple) {
     console.log(
       "Group",
       domain,
       group.length,
-      group.map((t) => t.id)
+      group.map((t) => t.id),
     );
 
-    for (let tab of group) {
+    for (const tab of group) {
       // await browser.runtime.sendMessage(TST_ID, {
       //   type: 'detach',
       //   tab:  tab.id
