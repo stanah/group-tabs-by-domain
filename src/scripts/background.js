@@ -1,88 +1,43 @@
 const TST_ID = "treestyletab@piro.sakura.ne.jp";
 
 import { createDebugMenu } from "./debug.js";
-import { getDomain, groupBy, sleep } from "./utils/util.js";
+import { groupBy, sleep } from "./util.js";
 
-// Operate _only_ on the current window, or on all windows, merging all windows'
-// tabs into the current window?
-const MERGE_ALL_WINDOWS_TOGETHER = false;
-
-const DEBUGGING = true;
+const DEBUGGING = false;
 
 if (DEBUGGING) {
   createDebugMenu();
 }
 
 /**
- * @typedef {Object} TabGroup タブのグループ
- * @property {string} name グループ名(ドメイン)
- * @property {string[]} tabs
- */
-
-/**
- * @typedef {Object} WindowGroup ウィンドウに含まれるグループ
+ * @typedef {Object} TabWithDomain ドメイン情報を含むタブ
+ * @property {string} id タブID
  * @property {string} windowId ウィンドウID
- * @property {TabGroup[]} tabGroups
+ * @property {string} title タブのタイトル
+ * @property {string} url タブのURL
+ * @property {string} domain タブのドメイン
  */
 
 /**
- * @typedef {Object} WindowMap ウィンドウIDをキーとしたグループ
- * @property {WindowGroup} windowId
+ * 現在のウィンドウのタブを取得する
+ * @returns {Promise<TabWithDomain[]>} タブの配列を返すPromise
  */
-
-/**
- * 現在のグループ化状態を保持する
- * @type {WindowMap}
- */
-const currentGrouping = {};
-
-async function initializeGrouping() {
-  // currentGroupingを初期化する
-  for (const key in currentGrouping) {
-    delete currentGrouping[key];
-  }
-  // すべてのウィンドウを取得する
-  const windows = await browser.windows.getAll();
-  // すべてのウィンドウに対してグループ情報を取得する
-  for (const window of windows) {
-    const tabGroups = await getTabGroups(window.id);
-    currentGrouping[window.id] = tabGroups;
-  }
-}
-
-// getTabGroupsを実装する
-async function getTabGroups(windowId) {
-  // ウィンドウに含まれるタブを取得する
-  const tabs = await browser.tabs.query({ windowId });
-  // ウィンドウに含まれるタブをドメインでグループ化する
-  const groups = groupBy(tabs, "domain");
-  // グループを配列に変換する
-  const tabGroups = Object.entries(groups).map(([name, tabs]) => {
-    return {
-      name,
-      tabs,
-    };
-  });
-  // グループを返す
-  return tabGroups;
-}
-
-//型情報を追加する
-
-/**
- * 現在のウィンドウまたは全てのウィンドウのタブを取得する
- * @returns {Promise<browser.tabs.Tab[]>} タブの配列を返すPromise
- */
-async function getTabs() {
-  let opts = {};
-
-  if (!MERGE_ALL_WINDOWS_TOGETHER) {
-    const currentWindow = await browser.windows.getCurrent();
-    opts = { windowId: currentWindow.id };
-  }
-
+async function getCurrentWindowTabs() {
+  const currentWindow = await browser.windows.getCurrent();
+  const opts = { windowId: currentWindow.id };
   const tabs = await browser.tabs.query(opts);
-  return tabs;
+
+  const tabsWithdomain = tabs.map((t) => {
+    try {
+      const url = new URL(t.url);
+      return { ...t, domain: url.hostname };
+    } catch (e) {
+      // do nothing with bad URLs
+      return t;
+    }
+  });
+
+  return tabsWithdomain;
 }
 
 // グループ化から除外する
@@ -93,36 +48,21 @@ async function filterTabs(tabs) {
     .filter((t) => t.domain?.length); // maybe couldn't parse URL for some reason
 }
 
-async function groupTabs(groupName, tabIds) {
-  browser.runtime.sendMessage(TST_ID, {
+async function tstGroupTabs(groupName, tabIds) {
+  const parentTab = browser.runtime.sendMessage(TST_ID, {
     type: "group-tabs",
-    title: groupName,
+    title: `${groupName}`,
     tabs: tabIds,
   });
+  return parentTab;
 }
 
 async function groupAllTabs() {
-  const tabs = await getTabs();
-
-  const tabsWithdomain = tabs.map((t) => {
-    try {
-      const url = new URL(t.url);
-      return {
-        ...t,
-        domain: url.hostname,
-      };
-    } catch (e) {
-      // do nothing with bad URLs
-      return t;
-    }
-  });
-
-  const filteredTabs = await filterTabs(tabsWithdomain);
+  const tabs = await getCurrentWindowTabs();
+  const filteredTabs = await filterTabs(tabs);
   const groups = groupBy(filteredTabs, "domain");
 
   const groupsWithMultiple = Object.entries(groups).filter((g) => g[1].length > 1);
-
-  console.log(groupsWithMultiple);
 
   for (const [domain, group] of groupsWithMultiple) {
     for (const tab of group) {
@@ -134,10 +74,64 @@ async function groupAllTabs() {
     }
 
     const tabIds = group.map((t) => t.id);
-    console.log(domain, tabIds);
-    await groupTabs(domain, tabIds);
+    const parentTab = await tstGroupTabs(domain, tabIds);
+
+    const faviconUrl = `http://www.google.com/s2/favicons?domain=${domain}`;
+    await setFavicon(parentTab.id, faviconUrl);
     await sleep(1000);
   }
+}
+
+async function setFavicon(tabId, imageUrl) {
+  const BASE_STYLE = `
+  ::part(%EXTRA_CONTENTS_PART% container) {
+    opacity: 100%;
+    height: 100%;
+    padding-left: 20px;
+    z-index: 2000;
+    display: flex;
+    align-items: center; /* 垂直方向中央揃え */
+  }
+  `;
+
+  try {
+    // group-tabのアイコンを表示しない
+    const ret = await browser.runtime.sendMessage(TST_ID, {
+      type: "register-self",
+      style: `
+      :root.simulate-svg-context-fill tab-item.group-tab .favicon-builtin::before {
+        background: transparent var(--icon-folder) no-repeat center / 100%;
+        mask: none;
+      }
+      `,
+    });
+
+    // faviconを取得する
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const base64data = await blobToBase64(blob);
+
+    const iconSize = "16px";
+    // set-extra-contentsでfaviconを表示する
+    await browser.runtime.sendMessage(TST_ID, {
+      type: "set-extra-contents",
+      place: "tab-behind", // "tab-front",
+      tab: tabId,
+      contents: `<span id="favicon" part="favicon"><img src="${base64data}" width="${iconSize}" height="${iconSize}" part="img"></span>`,
+      style: BASE_STYLE,
+    });
+  } catch (error) {
+    console.error("Error fetching image:", error);
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 // Listeners
@@ -147,31 +141,15 @@ browser.browserAction.onClicked.addListener(() => {
 });
 
 // タブが作成されたときに呼び出されるリスナー
-browser.tabs.onCreated.addListener((tab) => {
-  // 新たに作成されたタブだけを整理する
-  organizeTab(tab).catch((e) => console.error(e));
-});
+// browser.tabs.onCreated.addListener((tab) => {
+//   // 新たに作成されたタブだけを整理する
+//   organizeTab(tab).catch((e) => console.error(e));
+// });
 
 // browser.tabs.onUpdated
 
 // browser.tabs.onRemoved
 
-// タブを整理する関数
-async function organizeTab(tab) {
-  // タブのURLを取得する
-  const url = tab.url;
-
-  // タブのURLからドメインを取得する
-  const domain = getDomain(url);
-
-  // タブのドメインが現在のグループ化状態に含まれているか確認する
-  if (currentGrouping[domain]) {
-    // タブのドメインが現在のグループ化状態に含まれている場合
-    // タブをグループに追加する
-    addTabToGroup(tab.windowId, tab, domain);
-  } else {
-    // タブのドメインが現在のグループ化状態に含まれていない場合
-    // タブをグループに追加する
-    addTabToGroup(tab.windowId, tab, domain);
-  }
-}
+browser.runtime.onMessageExternal.addListener((message, sender) => {
+  // console.log("message", message, sender);
+});

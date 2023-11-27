@@ -1,10 +1,3 @@
-export function getDomain(url) {
-  // URLを解析する
-  const urlObject = new URL(url);
-  // ホスト名を返す
-  return urlObject.hostname;
-}
-
 /**
  * タブを指定されたキーでグループ化します。
  * @param {Array} tabs - グループ化するタブの配列
