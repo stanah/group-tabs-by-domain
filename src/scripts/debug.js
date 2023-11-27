@@ -29,13 +29,25 @@ export function shuffle(array) {
 async function shuffleTabs() {
   // 現在のウィンドウを取得する
   const window = await browser.windows.getCurrent();
-  // ウィンドウに含まれるタブを取得する
-  const tabs = await browser.tabs.query({ windowId: window.id });
+
+  // グループ化タブを閉じる
+  {
+    const tabs = await browser.tabs.query({ windowId: window.id });
+    for (const tab of tabs) {
+      if (tab.url.match(/^moz-extension:\/\/.*\/resources\/group-tab\.html.*/)) {
+        await browser.tabs.remove(tab.id);
+      }
+    }
+  }
+
   // タブをランダムな順番に並び替える
-  const shuffledTabs = shuffle(tabs);
-  // タブを順番に移動する
-  for (const [index, tab] of shuffledTabs.entries()) {
-    await browser.tabs.move(tab.id, { index });
+  {
+    const tabs = await browser.tabs.query({ windowId: window.id });
+    const shuffledTabs = shuffle(tabs);
+    // タブを順番に移動する
+    for (const [index, tab] of shuffledTabs.entries()) {
+      await browser.tabs.move(tab.id, { index });
+    }
   }
 }
 
