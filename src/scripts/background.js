@@ -1,13 +1,16 @@
 const TST_ID = "treestyletab@piro.sakura.ne.jp";
 
-import { createDebugMenu } from "./debug.js";
+// import { createDebugMenu } from "./debug.js";
 import { groupBy, matchGroupTab, sleep } from "./util.js";
 
-const DEBUGGING = true;
+import { createOptionsMenu, getOption } from "./options.js";
 
-if (DEBUGGING) {
-  createDebugMenu();
-}
+// 設定の型を定義する
+/**
+ * @typedef {Object} Options 設定
+ * @property {boolean} [debug] デバッグモードかどうか
+ * @property {boolean} [autoGroupTabs] タブを自動的にグループ化するかどうか
+ */
 
 /**
  * @typedef {Object} TabWithDomain ドメイン情報を含むタブ
@@ -149,6 +152,9 @@ async function getGroupTab(groupName) {
 }
 
 async function insertTabToGroup(tabId) {
+  const autoGroupEnable = await getOption("autoGroupEnable");
+  if (!autoGroupEnable) return;
+
   // タブIDを指定してタブを取得する
   const tab = await browser.tabs.get(tabId);
   if (matchGroupTab(tab.url)) {
@@ -171,12 +177,19 @@ async function insertTabToGroup(tabId) {
   });
 }
 
+// オプションを取得する
+async function getOptions() {
+  const options = await browser.storage.local.get();
+  return options;
+}
+
 // Listeners
 // ボタンがクリックされたときに呼び出されるリスナー
 browser.browserAction.onClicked.addListener(() => {
   groupAllTabs();
 });
 
+// タブが更新されたときに呼び出されるリスナー
 browser.tabs.onUpdated.addListener((tabId) => {
   insertTabToGroup(tabId);
 });
@@ -184,3 +197,5 @@ browser.tabs.onUpdated.addListener((tabId) => {
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   // console.log("message", message, sender);
 });
+
+createOptionsMenu();
