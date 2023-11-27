@@ -96,7 +96,7 @@ async function setFavicon(tabId, imageUrl) {
 
   try {
     // group-tabのアイコンを表示しない
-    const ret = await browser.runtime.sendMessage(TST_ID, {
+    await browser.runtime.sendMessage(TST_ID, {
       type: "register-self",
       style: `
       :root.simulate-svg-context-fill tab-item.group-tab .favicon-builtin::before {
