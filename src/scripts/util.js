@@ -26,3 +26,7 @@ export function groupBy(tabs, key) {
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export function matchGroupTab(url) {
+  return !!url.match(/^moz-extension:\/\/.*\/resources\/group-tab\.html.*/);
+}

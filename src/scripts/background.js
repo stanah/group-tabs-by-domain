@@ -1,9 +1,9 @@
 const TST_ID = "treestyletab@piro.sakura.ne.jp";
 
 import { createDebugMenu } from "./debug.js";
-import { groupBy, sleep } from "./util.js";
+import { groupBy, matchGroupTab, sleep } from "./util.js";
 
-const DEBUGGING = false;
+const DEBUGGING = true;
 
 if (DEBUGGING) {
   createDebugMenu();
@@ -134,21 +134,52 @@ function blobToBase64(blob) {
   });
 }
 
+async function getGroupTab(groupName) {
+  const tabs = await getCurrentWindowTabs();
+  const groupTabs = tabs.filter((tab) => matchGroupTab(tab.url)).filter((t) => t.title === groupName);
+  if (groupTabs.length === 0) {
+    return null;
+  }
+  if (groupTabs.length > 1) {
+    console.error("too many group tabs");
+    return null;
+    // return groupTabs[0];
+  }
+  return groupTabs[0];
+}
+
+async function insertTabToGroup(tabId) {
+  // タブIDを指定してタブを取得する
+  const tab = await browser.tabs.get(tabId);
+  if (matchGroupTab(tab.url)) {
+    console.log("ignore group tab");
+    return;
+  }
+
+  // タブのドメインを取得する
+  const url = new URL(tab.url);
+  const domain = url.hostname;
+
+  // 同一ドメインのグループタブを取得する
+  const group = await getGroupTab(domain);
+  if (group == null) return;
+
+  await browser.runtime.sendMessage(TST_ID, {
+    type: "attach",
+    parent: group.id,
+    child: tabId,
+  });
+}
+
 // Listeners
 // ボタンがクリックされたときに呼び出されるリスナー
 browser.browserAction.onClicked.addListener(() => {
   groupAllTabs();
 });
 
-// タブが作成されたときに呼び出されるリスナー
-// browser.tabs.onCreated.addListener((tab) => {
-//   // 新たに作成されたタブだけを整理する
-//   organizeTab(tab).catch((e) => console.error(e));
-// });
-
-// browser.tabs.onUpdated
-
-// browser.tabs.onRemoved
+browser.tabs.onUpdated.addListener((tabId) => {
+  insertTabToGroup(tabId);
+});
 
 browser.runtime.onMessageExternal.addListener((message, sender) => {
   // console.log("message", message, sender);
