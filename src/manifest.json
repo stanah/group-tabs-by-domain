@@ -18,5 +18,5 @@
   "background": {
     "page": "bg.html"
   },
-  "permissions": ["tabs", "contextMenus", "<all_urls>"]
+  "permissions": ["tabs", "contextMenus", "<all_urls>", "storage"]
 }
