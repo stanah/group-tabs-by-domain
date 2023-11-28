@@ -3,7 +3,7 @@
   "name": "TST Group Tabs by Domain",
   "version": "0.0.1",
   "description": "Groups Tree Style Tabs by Domain",
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "tst-group-tabs-by-domain@stanah"
     }
