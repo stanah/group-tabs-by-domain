@@ -11,6 +11,8 @@
   "scripts": {
     "build": "web-ext build --overwrite-dest --source-dir ./src",
     "dev": "web-ext run --source-dir ./src",
-    "dev:profile": "web-ext run --source-dir ./src --keep-profile-changes --firefox-profile=default-release"
+    "dev:profile": "web-ext run --source-dir ./src --keep-profile-changes --firefox-profile=default-release",
+    "sign": "web-ext sign --source-dir ./src",
+    "lint": "web-ext lint --source-dir ./src"
   }
 }
