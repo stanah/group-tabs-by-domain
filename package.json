@@ -2,7 +2,7 @@
   "name": "tst-group-tabs-by-domain",
   "author": "stanah",
   "repository": "github:stanah/tst-group-tabs-by-domain ",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "devDependencies": {
     "@biomejs/biome": "^1.3.3",
