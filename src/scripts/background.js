@@ -177,12 +177,6 @@ async function insertTabToGroup(tabId) {
   });
 }
 
-// オプションを取得する
-async function getOptions() {
-  const options = await browser.storage.local.get();
-  return options;
-}
-
 // Listeners
 // ボタンがクリックされたときに呼び出されるリスナー
 browser.browserAction.onClicked.addListener(() => {
