@@ -5,7 +5,7 @@
   "description": "Groups Tree Style Tabs by Domain",
   "browser_specific_settings": {
     "gecko": {
-      "id": "tst-group-tabs-by-domain@stanah"
+      "id": "tst_group_tabs_by_domain@stanah"
     }
   },
   "browser_action": {},
