@@ -13,6 +13,7 @@
     "dev": "web-ext run --source-dir ./src",
     "dev:profile": "web-ext run --source-dir ./src --keep-profile-changes --firefox-profile=default-release",
     "sign": "web-ext sign --source-dir ./src",
-    "lint": "web-ext lint --source-dir ./src"
+    "lint": "web-ext lint --source-dir ./src",
+    "version": "node scripts/update-manifest.js && biome format --write src/manifest.json && git add src/manifest.json"
   }
 }
