@@ -1,7 +1,7 @@
 {
   "name": "tst-group-tabs-by-domain",
   "author": "stanah",
-  "repository": "github:stanah/tst-random-tab",
+  "repository": "github:stanah/tst-group-tabs-by-domain ",
   "version": "0.0.2",
   "private": true,
   "devDependencies": {
